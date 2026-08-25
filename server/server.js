@@ -2206,6 +2206,8 @@ app.get("/api/dashboard/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
+    console.log("Dashboard request for user:", userId);
+
     // =================================================
     // GET USER + WELCOME BONUS INFORMATION
     // =================================================
@@ -2275,7 +2277,7 @@ app.get("/api/dashboard/:userId", async (req, res) => {
     let activeInvestments = 0;
     let investmentEarnings = 0;
     let todaysReturn = 0;
-    let claimableReturn = 0; // NEW: Track claimable amount
+    let claimableReturn = 0;
 
     const now = new Date();
 
@@ -2303,10 +2305,6 @@ app.get("/api/dashboard/:userId", async (req, res) => {
       activeInvestments++;
 
 
-      // -----------------------------------------------
-      // FULL 24-HOUR PERIODS ELAPSED
-      // -----------------------------------------------
-
       const elapsedMilliseconds =
         now.getTime() -
         startDate.getTime();
@@ -2323,10 +2321,6 @@ app.get("/api/dashboard/:userId", async (req, res) => {
         );
 
 
-      // -----------------------------------------------
-      // DAYS THAT CAN GENERATE EARNINGS
-      // -----------------------------------------------
-
       const earnedDays =
         Math.min(
           Math.max(
@@ -2337,29 +2331,14 @@ app.get("/api/dashboard/:userId", async (req, res) => {
         );
 
 
-      // -----------------------------------------------
-      // TOTAL INVESTMENT EARNINGS
-      // -----------------------------------------------
-
       investmentEarnings +=
         earnedDays *
         dailyReturn;
 
 
-      // -----------------------------------------------
-      // TODAY'S RETURN - SHOWS IMMEDIATELY (CHANGED)
-      // -----------------------------------------------
-      // Now displays the daily return amount right away
-      // as soon as the investment is active.
-
       if (earnedDays < periodDays) {
         todaysReturn += dailyReturn;
       }
-
-      // -----------------------------------------------
-      // CLAIMABLE RETURN - After 24 hours (NEW)
-      // -----------------------------------------------
-      // Track what's actually available to withdraw
 
       if (completeDays >= 1 && earnedDays < periodDays) {
         claimableReturn += dailyReturn;
@@ -2463,7 +2442,7 @@ app.get("/api/dashboard/:userId", async (req, res) => {
 
 
     // =================================================
-    // RESPONSE (UPDATED with claimable_return)
+    // RESPONSE
     // =================================================
 
     res.json({
@@ -2484,10 +2463,10 @@ app.get("/api/dashboard/:userId", async (req, res) => {
         totalEarnings,
 
       todays_return:
-        todaysReturn, // Now shows immediately
+        todaysReturn,
 
       claimable_return:
-        claimableReturn, // NEW: What's ready to withdraw
+        claimableReturn,
 
       available_balance:
         availableBalance,
@@ -2509,11 +2488,13 @@ app.get("/api/dashboard/:userId", async (req, res) => {
 
   } catch (error) {
 
-    console.error(error);
-
+    console.error("Dashboard error:", error.message);
+    console.error(error.stack);
+    
     res.status(500).json({
-      message:
-        "Unable to load dashboard."
+      message: "Unable to load dashboard.",
+      error: error.message,
+      stack: error.stack
     });
 
   }
